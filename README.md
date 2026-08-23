@@ -4,8 +4,8 @@ Upload a PDF or a photo/scan of a document and get back an adjustable-length
 summary, key points, word count, and reading time — no sign-up, no API key
 required to run it locally.
 
-**Live demo:** _add your deployed URL here_
-**Repo:** _add your GitHub URL here_
+   **Live demo:** https://document-summary-assistant-zga3.onrender.com
+   **Repo:** https://github.com/Archisha0808/document-summary-assistant
 
 ![Node](https://img.shields.io/badge/node-%3E%3D18-informational)
 
