@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Document Summary Assistant</title>
+<meta name="description" content="Upload a PDF or scanned image and get an instant, adjustable-length summary with key points." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div class="page">
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">&#9670;</span>
+      <span class="brand-name">Document Summary Assistant</span>
+    </div>
+    <p class="brand-tag">PDF &amp; scanned-image summarizer</p>
+  </header>
+
+  <main class="stage">
+
+    <section class="intro">
+      <p class="eyebrow">01 &mdash; Upload</p>
+      <h1>Turn any document into what matters.</h1>
+      <p class="lede">Drop in a PDF or a photo of a printed page. We'll pull out the text and hand you back the parts worth reading.</p>
+    </section>
+
+    <section class="card uploader" id="uploader">
+      <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Upload a document">
+        <input type="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg,.webp,.bmp" hidden />
+        <div class="dropzone-idle" id="dropzoneIdle">
+          <svg class="doc-icon" width="46" height="56" viewBox="0 0 46 56" fill="none" aria-hidden="true">
+            <path d="M4 4h26l12 12v36a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M30 4v12h12" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M10 30h20M10 37h20M10 44h13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <p class="dz-title">Drag a file here, or <span class="dz-link">browse</span></p>
+          <p class="dz-sub">PDF or image (PNG, JPG, WEBP) &middot; up to 15MB</p>
+        </div>
+        <div class="dropzone-file" id="dropzoneFile" hidden>
+          <svg class="file-chip-icon" width="28" height="34" viewBox="0 0 28 34" fill="none" aria-hidden="true">
+            <path d="M2 2h16l8 8v20a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z" fill="#FFD23F" stroke="#191919" stroke-width="1.5" stroke-linejoin="round"/>
+            <path d="M18 2v8h8" stroke="#191919" stroke-width="1.5" stroke-linejoin="round"/>
+          </svg>
+          <div class="file-chip-meta">
+            <p class="file-chip-name" id="fileName">document.pdf</p>
+            <p class="file-chip-size" id="fileSize">1.2 MB</p>
+          </div>
+          <button type="button" class="file-chip-remove" id="removeFile" aria-label="Remove file">&times;</button>
+        </div>
+      </div>
+
+      <div class="controls-row">
+        <div class="length-control">
+          <span class="length-label">Summary length</span>
+          <div class="length-tabs" role="radiogroup" aria-label="Summary length">
+            <button type="button" class="length-tab is-active" data-length="short" role="radio" aria-checked="true">Short</button>
+            <button type="button" class="length-tab" data-length="medium" role="radio" aria-checked="false">Medium</button>
+            <button type="button" class="length-tab" data-length="long" role="radio" aria-checked="false">Long</button>
+          </div>
+        </div>
+
+        <button type="button" class="btn-primary" id="summarizeBtn" disabled>
+          <span class="btn-label">Summarize document</span>
+        </button>
+      </div>
+
+      <div class="error-banner" id="errorBanner" hidden role="alert">
+        <span class="error-icon" aria-hidden="true">!</span>
+        <span id="errorMessage"></span>
+      </div>
+    </section>
+
+    <section class="card loading-card" id="loadingCard" hidden aria-live="polite">
+      <div class="loading-row">
+        <div class="pen-spinner" aria-hidden="true"></div>
+        <p class="loading-message" id="loadingMessage">Reading your document&hellip;</p>
+      </div>
+      <div class="loading-track"><div class="loading-fill" id="loadingFill"></div></div>
+    </section>
+
+    <section class="results" id="results" hidden>
+
+      <p class="eyebrow">02 &mdash; Summary</p>
+
+      <div class="card results-meta">
+        <div class="meta-item">
+          <span class="meta-label">File</span>
+          <span class="meta-value" id="metaFile">&mdash;</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Extraction</span>
+          <span class="meta-value" id="metaMethod">&mdash;</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Source length</span>
+          <span class="meta-value" id="metaWords">&mdash;</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Est. reading time</span>
+          <span class="meta-value" id="metaReading">&mdash;</span>
+        </div>
+      </div>
+
+      <div class="card key-points-card">
+        <h2 class="card-heading">Key points</h2>
+        <ul class="key-points" id="keyPoints"></ul>
+      </div>
+
+      <div class="card summary-card">
+        <div class="summary-card-head">
+          <h2 class="card-heading">Summary</h2>
+          <button type="button" class="btn-ghost" id="copySummary">Copy</button>
+        </div>
+        <p class="summary-text" id="summaryText"></p>
+      </div>
+
+      <details class="card extracted-card">
+        <summary class="card-heading extracted-summary">View full extracted text</summary>
+        <p class="extracted-text" id="extractedText"></p>
+      </details>
+
+      <button type="button" class="btn-ghost start-over" id="startOver">Summarize another document</button>
+
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <p>Built for the Document Summary Assistant technical assessment. Text extraction and summarization run on the server &mdash; no data is stored after processing.</p>
+  </footer>
+
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
