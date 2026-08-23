@@ -1,7 +1,6 @@
 # Document Summary Assistant
 
-Upload a PDF or a photo of a document and get back a summary, key points,
-word count, and reading time. No sign-up, no API key needed to run it.
+Upload a PDF or a photo of a document and get back a summary, key points, word count, and reading time. No sign-up, no API key needed.
 
 **Live demo:** https://document-summary-assistant-zga3.onrender.com
 **Repo:** https://github.com/Archisha0808/document-summary-assistant
@@ -11,31 +10,20 @@ word count, and reading time. No sign-up, no API key needed to run it.
 ## Features
 
 - Drag-and-drop or file-picker upload for PDFs and images (PNG, JPG, WEBP, BMP), up to 15MB
-- PDF text extraction via `pdf-parse`, OCR for scanned images via `tesseract.js`
-- Short / medium / long summary length, plus auto-extracted key points
-- Loading states and clear error messages for bad file types, oversized files, unreadable PDFs, etc.
+- PDF text extraction with `pdf-parse`, OCR for scanned images with `tesseract.js`
+- Short / medium / long summary length, plus a few auto-extracted key points
+- Loading states and error messages for bad file types, oversized files, unreadable PDFs, and images with no legible text
 - Mobile-responsive, no frontend framework or build step
 
 ---
 
 ## How it works
 
-The app is a single Node/Express service that serves both the API and the
-static frontend, so it deploys as one piece.
+It's a single Node/Express app that serves both the API and the static frontend, so there's just one thing to deploy — no separate frontend host, no CORS to deal with.
 
-Text extraction branches on file type: `pdf-parse` reads a PDF's text layer
-directly, and images go through `tesseract.js` for OCR. Both feed into an
-extractive summarizer I wrote from scratch — it scores each sentence by how
-frequently its words appear elsewhere in the document (with a small bonus
-for opening sentences), keeps the top-scoring sentences, and puts them back
-in their original order.
+Text extraction depends on the file type: `pdf-parse` reads a PDF's text layer directly, and images go through `tesseract.js` for OCR. Both feed into a summarizer I wrote myself, which scores each sentence based on how often its words show up elsewhere in the document, gives opening sentences a small boost, and keeps the top-scoring sentences in their original order. Key points are just the most frequent non-filler words in the text.
 
-I went with extractive summarization instead of calling an LLM because it
-runs offline, needs no API key, costs nothing per request, and can't
-hallucinate — every sentence in the summary is lifted directly from the
-source. The trade-off is that it can't paraphrase. `utils/summarizer.js` is
-a single `summarize(text, length)` function, so swapping in an LLM-based
-summarizer later is a self-contained change.
+I went with this extractive approach instead of calling an LLM because it runs offline, doesn't need an API key, costs nothing per request, and can't make anything up — every sentence in the summary comes straight from the source document. The downside is it can't paraphrase or rephrase anything, which is a fair trade-off for something meant to run for free with no external dependencies. If you wanted to swap in an LLM later, `utils/summarizer.js` is a single `summarize(text, length)` function, so it's a self-contained change.
 
 ---
 
@@ -70,21 +58,18 @@ npm start
 
 Open http://localhost:3000.
 
-Note: the first time you summarize an image, `tesseract.js` downloads its
-English language data (~10-15MB) and caches it. That needs outbound
-internet access, and only happens once per environment.
+One thing to know: the first time you summarize an image, `tesseract.js` downloads its English language data (about 10-15MB) and caches it. That needs an internet connection on whatever machine is running the server, but it's a one-time thing, not per request.
 
 ---
 
 ## Deployment
 
-Deployed on Render:
+This app is deployed on Render:
 - Build command: `npm install`
 - Start command: `npm start`
 - No environment variables needed
 
-Any Node-friendly host works the same way (Railway, Heroku, etc.) since
-it's just a single long-running Node process.
+It would work the same way on Railway or Heroku since it's just a single long-running Node process. Vercel's serverless functions can work too, but OCR gets slow on cold starts since the language data has to be fetched fresh each time, so a regular server host is a better fit here.
 
 ---
 
@@ -115,16 +100,12 @@ it's just a single long-running Node process.
 }
 ```
 
-Errors come back as `{ "error": "message" }` with status `400` (bad
-request), `413` (file too large), `422` (unreadable/empty document), or
-`500` (unexpected).
+Errors come back as `{ "error": "message" }` with a status code: `400` for a bad request, `413` if the file's too large, `422` if the document is unreadable or empty, `500` for anything unexpected.
 
 ---
 
-## Notes
+## A few other notes
 
-- Uploads are handled in memory and never written to disk, so nothing
-  needs cleaning up and no document content is retained after the response
-  is sent.
-- A single failed OCR request can't take down the server for other users —
-  it's isolated with its own timeout and error handling.
+Uploads are handled entirely in memory and never touch disk, so there's nothing to clean up and no document content sticks around after the response goes out.
+
+I also added a bit of error isolation around the OCR step — a failed OCR request (like a language-data download timing out) won't take the whole server down for everyone else using it at the same time.
