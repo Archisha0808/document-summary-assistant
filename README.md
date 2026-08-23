@@ -26,7 +26,7 @@ required to run it locally.
 
 ---
 
-## Approach (≤200 words)
+## Approach
 
 I built this as a single Node/Express app that serves a static frontend and
 exposes one endpoint, `POST /api/summarize`, so the whole thing deploys as
